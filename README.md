@@ -1,11 +1,11 @@
-# Creature Heads
+# Creature Interface
 
 ## Dependencies
 - Adafruit MPR121 Library: https://github.com/adafruit/Adafruit_MPR121_Library
 
 ## How to install
 1. Download the above library and put in `ARDUINO_SKETCH_FOLDER/libraries`
-2. Copy this directory into `ARDUINO_SKETCH_FOLDER`
+2. Copy this directory into `ARDUINO_SKETCH_FOLDER` (or git clone)
 3. Compile and run
 
 ## Wiring (for Arduino UNO)
