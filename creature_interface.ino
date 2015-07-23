@@ -1,6 +1,3 @@
-#include <Wire.h>
-#include <Adafruit_MPR121.h>
-
 // defines for midi signals
 #define MIDI_NOTE_ON             0x90
 #define MIDI_NOTE_OFF            0x80
@@ -27,31 +24,14 @@ bool midiReady = false;
 #define ACTION_WAIT  3
 int action = ACTION_WAIT;
 
-// I2C cap board
-#define NUM_PADS     12
-Adafruit_MPR121 cap = Adafruit_MPR121();
-uint16_t capPrevTouched = 0;
-uint16_t capTouched = 0;
+// MIDI note states
+#define CREATURE_NOTE_START    60
+#define CREATURE_MAX_NOTES     12
+bool notesOn[CREATURE_MAX_NOTES];
 
 void setup() {
   // Start MIDI
   midiSetup();
-  
-  // Start Cap
-  if (!cap.begin(0x5A)) {
-    // If we can't find the cap, blink the lights on and off
-    while(true) {
-      digitalWrite(STAT1, HIGH);  
-      digitalWrite(STAT2, LOW);
-  
-      delay(30);
-  
-      digitalWrite(STAT1, LOW);  
-      digitalWrite(STAT2, HIGH);
-  
-      delay(30);
-    }
-  }
 }
 
 void midiSetup() {
@@ -66,16 +46,21 @@ void midiSetup() {
   digitalWrite(BUTTON3, HIGH);
   
   // flash MIDI Sheild LEDs on startup
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 10; ++i) {
     digitalWrite(STAT1, HIGH);  
     digitalWrite(STAT2, HIGH);
 
-    delay(30);
+    delay(100);
 
     digitalWrite(STAT1, LOW);  
     digitalWrite(STAT2, LOW);
 
-    delay(30);
+    delay(100);
+  }
+  
+  // All notes are off to start
+  for(int i = 0; i < CREATURE_MAX_NOTES; ++i) {
+    notesOn[i] = false;
   }
 
   digitalWrite(STAT1, HIGH);
@@ -86,7 +71,9 @@ void midiSetup() {
 }
 
 void loop() {
-  midiRecieve();
+  bool button1On, button2On;
+
+  midiReceive();
   
   // Handle incoming MIDI signals here
   if (midiReady) {
@@ -98,18 +85,44 @@ void loop() {
     midiReset();
   }
   
-  // Send MIDI notes if touch state changed
-  capTouched = cap.touched();
-  for (int i = 0; i < NUM_PADS; i++) {
-    // it if *is* touched and *wasnt* touched before, alert!
-    if ((capTouched & _BV(i)) && !(capPrevTouched & _BV(i))) {
-      midiSend(MIDI_NOTE_ON, i, MIDI_DEFAULT_VELOCITY);
-    }
-    // if it *was* touched and now *isnt*, alert!
-    if (!(capTouched & _BV(i)) && (capPrevTouched & _BV(i))) {
-      midiSend(MIDI_NOTE_OFF, i, MIDI_DEFAULT_VELOCITY);
-    }
-  }
+  // Example of how to send midi
+  button1On = digitalRead(BUTTON1);
+  button2On = digitalRead(BUTTON2);
+  if (button1On)
+    noteOn(0);
+  else
+    noteOff(0);
+  
+  if (button2On)
+    noteOn(1);
+  else
+    noteOff(1);
+}
+
+void noteOn(short note) {
+  // Check if outside of creature range.
+  if (note < 0 || note >= CREATURE_MAX_NOTES)
+    return;
+    
+  // Check if already on.
+  if (notesOn[note])
+    return;
+
+  midiSend(MIDI_NOTE_ON, note + CREATURE_NOTE_START, MIDI_DEFAULT_VELOCITY);
+  notesOn[note] = true;
+}
+
+void noteOff(short note) {
+  // Check if outside of creature range.
+  if (note < 0 || note >= CREATURE_MAX_NOTES)
+    return;
+    
+  // Check if already off.
+  if (!notesOn[note])
+    return;
+
+  midiSend(MIDI_NOTE_OFF, note + CREATURE_NOTE_START, MIDI_DEFAULT_VELOCITY);
+  notesOn[note] = false;
 }
 
 void midiSend(byte cmd, byte data1, byte data2) {
@@ -118,7 +131,7 @@ void midiSend(byte cmd, byte data1, byte data2) {
   Serial.write(data2);
 }
 
-void midiRecieve() {
+void midiReceive() {
   // Ignore if there's nothing to process
   if (Serial.available() == 0) 
     return;

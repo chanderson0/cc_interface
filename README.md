@@ -1,22 +1,18 @@
 # Creature Interface
 
-## Dependencies
-- Adafruit MPR121 Library: https://github.com/adafruit/Adafruit_MPR121_Library
-
 ## How to install
-1. Download the above library and put in `ARDUINO_SKETCH_FOLDER/libraries`
-2. Copy this directory into `ARDUINO_SKETCH_FOLDER` (or git clone)
-3. Compile and run
+1. Copy this directory into `ARDUINO_SKETCH_FOLDER` (or git clone)
+2. Compile and run
 
 ## Wiring (for Arduino UNO)
 - Connect MIDI Shield to unit
-- Arduino A5 -> Cap Breakout SCL
-- Arduino A4 -> Cap Breakout SDA
-- Arduino +5V -> Cap Breakout Vin
-- Arduino GND -> Cap Breakout GND
+- Connect MIDI->USB translator to MIDI Shield
 
 ## How to run
 1. Connect Arduino w/ MIDI shield to computer
 2. Switch RUN/PROG switch to PROG
 3. Upload sketch
 4. Switch RUN/PROG switch to RUN
+
+## Creature specifics
+- MIDI out expects 12 notes (60-72)
